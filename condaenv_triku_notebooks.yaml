@@ -1,7 +1,7 @@
 name: triku-notebooks
 channels:
-  - anaconda
   - bioconda
+  - anaconda
   - conda-forge
   - defaults
 dependencies:
@@ -10,6 +10,7 @@ dependencies:
   - _r-mutex=1.0.1=anacondar_1
   - alabaster=0.7.12=py_0
   - anndata=0.7.6=py38h578d9bd_0
+  - anndata2ri=1.0.6=py_0
   - anyio=2.2.0=py38h578d9bd_0
   - appdirs=1.4.4=pyh9f0ad1d_0
   - argon2-cffi=20.1.0=py38h497a2fe_2
@@ -25,7 +26,7 @@ dependencies:
   - binutils_impl_linux-64=2.35.1=h193b22a_2
   - binutils_linux-64=2.35=h67ddf6f_30
   - biopython=1.78=py38h497a2fe_2
-  - blas=1.0=mkl
+  - blas=1.1=openblas
   - bleach=3.3.0=pyh44b312d_0
   - blosc=1.21.0=h9c3ff4c_0
   - bokeh=2.3.1=py38h578d9bd_0
@@ -199,10 +200,10 @@ dependencies:
   - matplotlib-base=3.4.1=py38hcc49a3a_0
   - metis=5.1.0=he1b5a44_1006
   - mistune=0.8.4=py38h497a2fe_1003
-  - mkl=2021.2.0=h06a4308_296
-  - mkl-service=2.3.0=py38h27cfd23_1
-  - mkl_fft=1.3.0=py38h42c9631_2
-  - mkl_random=1.2.1=py38ha9443f7_2
+  - mkl=2020.2=256
+  - mkl-service=2.3.0=py38h1e0a361_2
+  - mkl_fft=1.2.0=py38hab2c0dc_1
+  - mkl_random=1.2.0=py38hc5bc63f_1
   - mock=4.0.3=py38h578d9bd_1
   - mpc=1.1.0=h04dde30_1009
   - mpfr=4.0.2=he80fd80_1
@@ -232,9 +233,9 @@ dependencies:
   - nss=3.64=hb5efdd6_0
   - numba=0.53.1=py38ha9443f7_0
   - numexpr=2.7.3=py38h51da96c_0
-  - numpy-base=1.20.1=py38h7d8b39e_0
   - numpy_groupies=0.9.13=pyh9f0ad1d_1
   - olefile=0.46=pyh9f0ad1d_1
+  - openblas=0.3.12=pthreads_h04b7a96_1
   - openjpeg=2.4.0=hf7af979_0
   - openmpi=4.1.0=hbfc84c5_5
   - openssl=1.1.1k=h7f98852_0
@@ -484,6 +485,7 @@ dependencies:
   - requests=2.25.1=pyhd3deb0d_0
   - retrying=1.3.3=py_2
   - rhash=1.4.1=h7f98852_0
+  - rpy2=3.4.4=py38r40hb5d20a5_0
   - salmon=0.14.2=ha0cc327_0
   - scalapack=2.0.2=hc7fdd6d_1009
   - scanpy=1.7.2=pyhdfd78af_0
@@ -499,6 +501,7 @@ dependencies:
   - setuptools=52.0.0=py38h06a4308_0
   - setuptools-scm=6.0.1=pyh44b312d_0
   - setuptools_scm=6.0.1=hd8ed1ab_0
+  - simplegeneric=0.8.1=py38_2
   - sinfo=0.3.1=py_0
   - six=1.15.0=pyh9f0ad1d_0
   - slepc=3.15.0=hbe48036_0
@@ -544,6 +547,7 @@ dependencies:
   - typing_extensions=3.7.4.3=py_0
   - tzlocal=2.1=pyh9f0ad1d_0
   - ucsc-twobittofa=377=h0b8a92a_3
+  - umap-learn==0.5.1
   - umi_tools=1.1.1=py38h4a8c8d9_2
   - urllib3=1.26.4=pyhd8ed1ab_0
   - wcwidth=0.2.5=pyh9f0ad1d_2
@@ -653,7 +657,6 @@ dependencies:
     - ray==1.3.0
     - redis==3.5.3
     - requests-cache==0.6.3
-    - rpy2==3.4.4
     - rsa==4.7.2
     - s-gd2==1.8
     - s3fs==0.4.2
@@ -667,7 +670,6 @@ dependencies:
     - tiledb==0.8.7
     - triku==1.3.1
     - typed-ast==1.4.3
-    - umap-learn==0.4.6
     - url-normalize==1.4.3
     - velocyto==0.17.17
     - vendorize==0.2.1
