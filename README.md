@@ -9,6 +9,7 @@ The notebooks are mean to be run in the order they appear (first 0, then 1, etc.
 * `1_Comparing_feature_selection_methods`: Reproduction of the main paper analysis. It produces the **Figures 3, 4, 5, 6, 7** and **Figures S1, S2, S3, and S4**.
 * `2A_Reads_in_knn_cells_as_a_method_for_feature_selection`: This is the fundational notebook with the rationale of *triku*. It includes **Figures S6 and S7**
 * `2B_Triku_stability_measures`: This notebook shows the robustness of the parameters of *triku*. It includes the **Figure S8**.
+* Notebooks starting with `X` are notebooks in development, or with results not relevant for the paper.
 
 ## How to run the notebooks
 If you want to reproduce the analysis in the notebooks, the best way to do it is this. We recommend that you use *conda* (miniconda or anaconda) as your package manager. We also recommend to install *mamba*, a package that works as *conda*, but optimizes the package download and resolution of dependencies. Thus,
