@@ -17,7 +17,7 @@ If you want to reproduce the analysis in the notebooks, the best way to do it is
 * Then, in the base environment, install *mamba* with `conda install -c conda-forge mamba`
 * To ensure reproducibility, create a new environment with the yaml file: `mamba env create -f condaenv_triku_notebooks.yaml`
 
-**If you want to see the output of the notebooks to replicate the figures, you can download them from [our Zenodo repository](https://doi.org/10.5281/zenodo.4016714).
+**If you want to see the output of the notebooks to replicate the figures, you can download them from [our Zenodo repository](https://doi.org/10.5281/zenodo.4016714).**
 
 ## Notes
 This project comes from the [triku repository](https://gitlab.com/alexmascension/triku). We have exported the notebooks to this second repository to keep the development of the software and the notebooks separate. The commit history of the notebooks before the separation can be consulted there.
