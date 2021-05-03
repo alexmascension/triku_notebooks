@@ -46,7 +46,7 @@ def run_batch(adata, windows, n_comps, knns, seeds, save_dir, dataset_prefix):
                     knn=knn,
                     random_state=seed,
                     verbose="triku",
-                    n_procs=25,
+                    n_procs=None,
                 )
                 distances_with_random = adata.var["triku_distance"].values
                 mean_exp = adata.X.sum(0)
