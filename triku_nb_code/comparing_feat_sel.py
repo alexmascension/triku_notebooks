@@ -787,6 +787,7 @@ def plot_lab_org_comparison_scores(
     filename="",
     mode="normal",
     lognames=None,  # None: nothing, 0: selects names without log, 1: selects names with log
+    do_return=False
 ):
 
     if isinstance(variables, str):
@@ -960,7 +961,7 @@ def plot_lab_org_comparison_scores(
     axl.spines["bottom"].set_visible(False)
 
     l1 = axr.legend(
-        bbox_to_anchor=(1, 0.75),
+        bbox_to_anchor=(1, 0.75), frameon=False,
         handles=[
             Line2D(
                 [0], [0], marker="o", color=palette[method_idx], label=method
@@ -985,6 +986,8 @@ def plot_lab_org_comparison_scores(
             f"{os.getcwd()}/figures/comparison_figs/{fmt}/{filename}.{fmt}",
             bbox_inches="tight",
         )
+    if do_return:
+        return fig
 
 
 def compare_rankings(
