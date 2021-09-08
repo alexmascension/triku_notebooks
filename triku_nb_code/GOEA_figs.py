@@ -4,11 +4,9 @@ import pandas as pd
 import os
 import numpy as np
 
-def scatter_enrichr(lab, org, method, n_features, n_ontologies=30, column_sort='Adjusted P-value', plot_type='bar', 
+def scatter_enrichr(lab, org, method, n_features, list_FS, palette, n_ontologies=30, column_sort='Adjusted P-value', plot_type='bar', 
                     list_onto=['KEGG_2019_Mouse', 'WikiPathways_2019_Mouse', 'KEGG_2019_Human', 'WikiPathways_2019_Human',
-                               'GO_Biological_Process_2018', 'GO_Cellular_Component_2018', 'GO_Molecular_Function_2018',], save=True):
-    list_FS = ['triku', 'scanpy', 'std', 'scry', 'brennecke', 'm3drop', 'nbumi']
-    palette = ["#E73F74","#7F3C8D","#11A579","#3969AC","#F2B701","#80BA5A","#E68310","#a0a0a0","#505050"]
+                               'GO_Biological_Process_2018', 'GO_Cellular_Component_2018', 'GO_Molecular_Function_2018',], save=True, ):
     
     fig, ax = plt.subplots(1, 1, figsize=(10, 3))
     
@@ -98,10 +96,10 @@ def barplot_ontologies_individual(df, axis=None, color="#ababab", column='Adjust
 
     
 def barplot_ontologies_all(dict_dfs, n_features=1000, list_FSs=['triku', 'std', 'scry', 'scanpy', 'm3drop', 'nbumi'], 
-                           list_colors=["#E73F74", "#11A579","#3969AC", "#7F3C8D", "#80BA5A","#E68310"], figsize=(17, 14), save=''):
+                           list_colors=["#E73F74", "#11A579","#3969AC", "#7F3C8D", "#80BA5A","#E68310"], figsize=(17, 17), save=''):
     
     mpl.rcParams.update({'font.size':17})
-    fig, axis = plt.subplots(2, 3, figsize=figsize)
+    fig, axis = plt.subplots(3, 3, figsize=figsize)
     
     for i in range(len(list_FSs)):
         barplot_ontologies_individual(dict_dfs[f'{n_features}_{list_FSs[i]}'], axis=axis.ravel()[i], 

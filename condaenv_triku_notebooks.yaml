@@ -664,6 +664,7 @@ dependencies:
     - s3fs==0.4.2
     - s3transfer==0.4.2
     - scikit-posthocs==0.6.7
+    - scmer==0.1.0a3
     - scprep==1.1.0
     - soupsieve==2.2.1
     - sqlalchemy==1.4.11
