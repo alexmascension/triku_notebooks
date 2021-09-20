@@ -13,6 +13,62 @@ from tqdm.notebook import tqdm
 import triku as tk
 from triku.tl._triku_functions import subtract_median
 
+from sklearn.decomposition import PCA
+
+import ray
+
+@ray.remote
+def run_individual(adata, window, n_comp, knn, seed, save_dir, dataset_prefix):
+#     print(window, n_comp, knn, seed)
+    save_file = "{save_dir}/{pref}-w_{w}-comps_{n_comps}-knn_{knn}-seed_{seed}.csv".format(
+        save_dir=save_dir,
+        pref=dataset_prefix,
+        w=window,
+        n_comps=n_comp,
+        knn=knn,
+        seed=seed,
+    )
+
+    if os.path.exists(save_file):
+        pass
+#         print("FILE EXISTS!")
+        
+    else:
+        adata_copy = adata.copy()
+        try:
+            sc.pp.filter_genes(adata_copy, min_cells=1) 
+            sc.pp.filter_cells(adata_copy, min_genes=1)
+            sc.pp.log1p(adata_copy)
+
+
+            try:
+                pca = PCA(n_components=n_comp, whiten=True, svd_solver="auto", random_state=seed,).fit_transform(adata_copy.X.toarray())
+            except: # the array is already dense
+                pca = PCA(n_components=n_comp, whiten=True, svd_solver="auto", random_state=seed,).fit_transform(adata_copy.X)
+
+            adata_copy.obsm['X_pca'] = pca
+            sc.pp.neighbors(adata_copy, random_state=seed, metric='cosine', n_neighbors=knn)
+
+            tk.tl.triku(adata_copy, n_windows=window, verbose='error')
+
+            df_res = pd.DataFrame(
+                data={
+                    "triku_distance": adata_copy.var["triku_distance"].values,
+                    "triku_distance_uncorrected": adata_copy.var["triku_distance_uncorrected"].values
+                },
+                index=adata_copy.var_names.values,
+            )
+        except:
+            df_res = pd.DataFrame(
+                data={
+                    "triku_distance": [np.NaN] * len(adata_copy.var_names),
+                    "triku_distance_uncorrected": [np.NaN] * len(adata_copy.var_names)
+                },
+                index=adata_copy.var_names.values,
+            )
+        
+        df_res.to_csv(save_file)
+        
 
 def run_batch(adata, windows, n_comps, knns, seeds, save_dir, dataset_prefix):
     # We have to run an array of selections. To do that, one of the parameters above must be
@@ -21,62 +77,12 @@ def run_batch(adata, windows, n_comps, knns, seeds, save_dir, dataset_prefix):
     # as csv. Each csv will contain the median-corrected distances, with and without correction with
     # randomization, for a determined combination of window / n_comp / knn and seed (we will use 3 or 5 seeds
     # for replication purposes).
-
-    for window, n_comp, knn, seed in tqdm(
-        product(*[windows, n_comps, knns, seeds])
-    ):
-        print(window, n_comp, knn, seed)
-        save_file = "{save_dir}/{pref}-w_{w}-comps_{n_comps}-knn_{knn}-seed_{seed}.csv".format(
-            save_dir=save_dir,
-            pref=dataset_prefix,
-            w=window,
-            n_comps=n_comp,
-            knn=knn,
-            seed=seed,
-        )
-
-        if os.path.exists(save_file):
-            print("FILE EXISTS!")
-        else:
-            try:
-                tk.tl.triku(
-                    adata,
-                    n_windows=window,
-                    n_comps=n_comp,
-                    knn=knn,
-                    random_state=seed,
-                    verbose="triku",
-                    n_procs=None,
-                )
-                distances_with_random = adata.var["triku_distance"].values
-                mean_exp = adata.X.sum(0)
-                distances_without_random = subtract_median(
-                    x=mean_exp,
-                    y=adata.var["triku_distance_uncorrected"].values,
-                    n_windows=window,
-                )
-                print(adata.var["triku_distance_uncorrected"].values[:5])
-                df_res = pd.DataFrame(
-                    data={
-                        "emd_random_correction": distances_with_random,
-                        "emd_no_correction": distances_without_random,
-                    },
-                    index=adata.var_names.values,
-                )
-
-            except BaseException:
-                df_res = pd.DataFrame(
-                    data={
-                        "emd_random_correction": [np.NaN]
-                        * len(adata.var_names),
-                        "emd_no_correction": [np.NaN] * len(adata.var_names),
-                    },
-                    index=adata.var_names.values,
-                )
-
-            df_res.to_csv(save_file)
-            del [df_res]
-            gc.collect()
+    
+    ray.init(ignore_reinit_error=True)
+    ray_get = ray.get([run_individual.remote(adata, window, n_comp, knn, seed, save_dir, dataset_prefix) 
+                       for window, n_comp, knn, seed in product(*[windows, n_comps, knns, seeds])])
+    ray.shutdown()
+        
 
 
 def run_all_batches(lib_preps, orgs, dataset, read_dir, save_dir):
@@ -94,7 +100,6 @@ def run_all_batches(lib_preps, orgs, dataset, read_dir, save_dir):
             print(f"File for {lib_prep} in {org} not found.")
             continue
 
-        print(file_in)
         adata = sc.read_h5ad(read_dir + file_in)
         sqr_n_cells = int(adata.shape[0] ** 0.5)
 
@@ -200,22 +205,22 @@ def return_window_indices(save_dir, org, lib_prep, dataset):
 def return_relative_noise(df_1, df_2, select_index_df):
     relative_noise_non_rand = list(
         (
-            df_1["emd_no_correction"].loc[select_index_df].values
-            - df_2["emd_no_correction"].loc[select_index_df].values
+            df_1["triku_distance"].loc[select_index_df].values
+            - df_2["triku_distance"].loc[select_index_df].values
         )
         / (
-            np.abs(df_1["emd_no_correction"].loc[select_index_df].values)
-            + np.abs(df_2["emd_no_correction"].loc[select_index_df].values)
+            np.abs(df_1["triku_distance"].loc[select_index_df].values)
+            + np.abs(df_2["triku_distance"].loc[select_index_df].values)
         )
     )
     relative_noise_rand = list(
         (
-            df_1["emd_random_correction"].loc[select_index_df].values
-            - df_2["emd_random_correction"].loc[select_index_df].values
+            df_1["triku_distance_uncorrected"].loc[select_index_df].values
+            - df_2["triku_distance_uncorrected"].loc[select_index_df].values
         )
         / (
-            np.abs(df_1["emd_random_correction"].loc[select_index_df].values)
-            + np.abs(df_2["emd_random_correction"].loc[select_index_df].values)
+            np.abs(df_1["triku_distance_uncorrected"].loc[select_index_df].values)
+            + np.abs(df_2["triku_distance_uncorrected"].loc[select_index_df].values)
         )
     )
     return relative_noise_rand, relative_noise_non_rand
@@ -223,22 +228,22 @@ def return_relative_noise(df_1, df_2, select_index_df):
 
 def return_percentage_overlap(df_1, df_2, min_n_feats, max_n_feats):
     feats_1_no_cor = (
-        df_1.sort_values(by="emd_no_correction", ascending=False)
+        df_1.sort_values(by="triku_distance", ascending=False)
         .index[min_n_feats:max_n_feats]
         .values
     )
     feats_2_no_cor = (
-        df_2.sort_values(by="emd_no_correction", ascending=False)
+        df_2.sort_values(by="triku_distance", ascending=False)
         .index[min_n_feats:max_n_feats]
         .values
     )
     feats_1_rand = (
-        df_1.sort_values(by="emd_random_correction", ascending=False)
+        df_1.sort_values(by="triku_distance_uncorrected", ascending=False)
         .index[min_n_feats:max_n_feats]
         .values
     )
     feats_2_rand = (
-        df_2.sort_values(by="emd_random_correction", ascending=False)
+        df_2.sort_values(by="triku_distance_uncorrected", ascending=False)
         .index[min_n_feats:max_n_feats]
         .values
     )
@@ -255,25 +260,25 @@ def return_percentage_overlap(df_1, df_2, min_n_feats, max_n_feats):
 
 def return_correlation(df_1, df_2, min_n_feats, max_n_feats):
     feats_1_no_cor = (
-        df_1["emd_no_correction"]
+        df_1["triku_distance"]
         .sort_values(ascending=False)
         .iloc[min_n_feats:max_n_feats]
         .values
     )
     feats_2_no_cor = (
-        df_2["emd_no_correction"]
+        df_2["triku_distance"]
         .sort_values(ascending=False)
         .iloc[min_n_feats:max_n_feats]
         .values
     )
     feats_1_rand = (
-        df_1["emd_random_correction"]
+        df_1["triku_distance_uncorrected"]
         .sort_values(ascending=False)
         .iloc[min_n_feats:max_n_feats]
         .values
     )
     feats_2_rand = (
-        df_2["emd_random_correction"]
+        df_2["triku_distance_uncorrected"]
         .sort_values(ascending=False)
         .iloc[min_n_feats:max_n_feats]
         .values
@@ -330,7 +335,7 @@ def random_noise_parameter(
         # find the genes with biggest distance. We will only choose the last dataframe, but for other
         # stuff we will do a combination of all of them
         select_index_df = (
-            (df["emd_no_correction"] + df["emd_random_correction"])
+            (df["triku_distance"] + df["triku_distance_uncorrected"])
             .sort_values(ascending=False)
             .index[min_n_feats:max_n_feats]
         )
@@ -374,7 +379,7 @@ def compare_parameter(
     knn_list = return_knn_indices(save_dir, org, lib_prep, dataset)
     pca_list = return_pca_indices(save_dir, org, lib_prep, dataset)
     window_list = return_window_indices(save_dir, org, lib_prep, dataset)
-
+        
     # We first fill on list of dfs with knn = sqrt(N)
     list_dfs_knn_1 = []
     for file in os.listdir(save_dir):
